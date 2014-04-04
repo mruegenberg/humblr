@@ -79,7 +79,7 @@ tumblrAuthorize oauth mgr = do
   cred <- getAccessToken oauth tempCred' mgr
   return cred
 
-tumblrBaseRequest :: Request m
+tumblrBaseRequest :: Request
 tumblrBaseRequest = def {
   host = B.pack "api.tumblr.com"
   }

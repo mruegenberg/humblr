@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import qualified Network.HTTP.Conduit as NetConduit
+import qualified Network.HTTP.Client as NetClient
 import qualified Web.Tumblr as Tumblr
 import qualified Web.Tumblr.Types as Tumblr.Types
 import Control.Monad.Trans.Resource
@@ -37,7 +38,7 @@ getTumblrSubmissionPosts mgr hostname = runResourceT $ do
    runReaderT (Tumblr.tumblrSubmissionPosts hostname Nothing Nothing credential mgr) oauth
 
 main = do  
-  mgr <- NetConduit.newManager NetConduit.def
+  mgr <- NetConduit.newManager NetClient.defaultManagerSettings
   let hostname = "144c.tumblr.com"
   val <- getTumblrInfo mgr hostname
   -- val <- getTumblrAvatar mgr hostname -- returns a ByteString

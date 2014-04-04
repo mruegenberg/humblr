@@ -6,6 +6,7 @@ import Data.Aeson
 import Control.Applicative ((<$>), (<*>), empty, pure)
 
 import Data.Time(UTCTime,ZonedTime)
+import Data.Time.Clock.POSIX
 import Data.Time.Format(parseTime)
 import Data.Time.LocalTime(zonedTimeToUTC)
 import System.Locale(defaultTimeLocale)
@@ -17,7 +18,7 @@ data BlogInfo = BlogInfo
                 , blogInfoPosts :: Int
                 , blogInfoName :: String
                 , blogInfoURL :: Maybe String
-                , blogInfoUpdated :: Int -- seconds since epoch
+                , blogInfoUpdated :: UTCTime
                 , blogInfoDescription :: String
                 , blogInfoAsk :: Bool
                 , blogInfoAskAnon :: Bool
@@ -30,7 +31,7 @@ instance FromJSON BlogInfo where
                          v .: "posts" <*>
                          v .: "name" <*> 
                          v .: "url" <*>
-                         v .: "updated" <*>
+                         (fmap (posixSecondsToUTCTime . fromInteger) (v .: "updated")) <*>
                          v .: "description" <*>
                          v .: "ask" <*>
                          v .: "ask_anon" <*>
@@ -164,7 +165,6 @@ data Post = Post
             , postId :: Int
             , postURL :: String
             , postDate :: UTCTime
-            , postTime :: Int
             , postState :: PostState
             , postFormat :: PostFormat
             , postReblogKey :: String
@@ -183,8 +183,7 @@ instance FromJSON Post where
                          v .: "blog_name" <*>
                          v .: "id" <*>
                          v .: "post_url" <*>
-                         ((v .: "date") >>= parseTumblrTime) <*>
-                         v .: "timestamp" <*>
+                         (fmap (posixSecondsToUTCTime . fromInteger) (v .: "timestamp")) <*>
                          v .: "state" <*>
                          v .: "format" <*>
                          v .: "reblog_key" <*>

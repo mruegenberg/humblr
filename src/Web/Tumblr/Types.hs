@@ -5,11 +5,8 @@ module Web.Tumblr.Types where
 import Data.Aeson
 import Control.Applicative ((<$>), (<*>), empty, pure)
 
-import Data.Time(UTCTime,ZonedTime)
+import Data.Time(UTCTime)
 import Data.Time.Clock.POSIX
-import Data.Time.Format(parseTime)
-import Data.Time.LocalTime(zonedTimeToUTC)
-import System.Locale(defaultTimeLocale)
 
 -- for reference, visit http://www.tumblr.com/docs/en/api/v2
 
@@ -114,9 +111,9 @@ instance FromJSON PostFormat where
   parseJSON _ = empty
   
 data PhotoInfo = PhotoInfo { sizeWidth :: Int, sizeHeight :: Int, photoURL :: String } deriving (Show, Eq)
-data Photo = Photo { originalSize :: PhotoInfo
-                   -- , alt_sizes :: [PhotoInfo] -- TODO
-                   } deriving (Show, Eq)
+data Photo = PostPhoto { originalSize :: PhotoInfo
+                         -- , alt_sizes :: [PhotoInfo] -- TODO
+                       } deriving (Show, Eq)
 data Dialogue = Dialogue { dialogueSpeaker :: String, dialogueSpeakerLabel :: String, dialoguePhrase :: String } deriving (Show, Eq)
 data VideoPlayer = VideoPlayer { videoPlayerWidth :: Int, videoPlayerEmbedCode :: String } deriving (Show, Eq)
 data PostData = TextPost { textTitle :: String, textBody :: String }
@@ -130,6 +127,20 @@ data PostData = TextPost { textTitle :: String, textBody :: String }
               | VideoPost { videoCaption :: String, videoPlayer :: [VideoPlayer] }
               | AnswerPost { askingName :: String, askingURL :: String, answerQuestion :: String, answerAnswer :: String }
               deriving (Show, Eq)
+                       
+data PostType = Text | Quote | Link | Answer | Video | Audio | Photo | Chat deriving (Eq, Show)
+
+instance FromJSON PostType where
+  parseJSON (String t) = case t of
+    "text" -> return Text
+    "quote" -> return Quote
+    "link" -> return Link
+    "answer" -> return Answer
+    "video" -> return Video
+    "audio" -> return Audio
+    "photo" -> return Photo
+    "chat" -> return Chat
+    _ -> empty
                 
 instance FromJSON PhotoInfo where
   parseJSON (Object v) = PhotoInfo <$> 
@@ -139,7 +150,7 @@ instance FromJSON PhotoInfo where
   parseJSON _ = empty
   
 instance FromJSON Photo where
-  parseJSON (Object v) = Photo <$> 
+  parseJSON (Object v) = PostPhoto <$> 
                          v .: "original_size" -- <*>
                          -- v .: "alt_sizes" -- TODO
   parseJSON _ = empty
@@ -175,6 +186,7 @@ data Post = Post
             , postSourceURL :: Maybe String
             , postSourceTitle :: Maybe String
             , postLiked :: Bool
+            , postType :: PostType
             , postTypeSpecificData :: PostData
             } deriving (Show, Eq)
               
@@ -194,6 +206,7 @@ instance FromJSON Post where
                          v .:? "source_title" <*>
                          v .:? "source_url" <*>
                          v .:? "liked" .!= False <*>
+                         v .: "type" <*>
                          ((v .: "type") >>= parseJSONTypeSpecific)
                            where
                              parseJSONTypeSpecific ("text" :: String) = TextPost <$>
@@ -232,9 +245,5 @@ instance FromJSON Post where
                                                               v .: "question" <*>
                                                               v .: "answer"
                              parseJSONTypeSpecific _ = fail "Invalid post type."
-                             
-                             parseTumblrTime t = case parseTime defaultTimeLocale "%F %X %Z" t of
-                               Just t' -> pure (zonedTimeToUTC t')
-                               Nothing -> fail "Could not parse date"
                              
   parseJSON _ = empty

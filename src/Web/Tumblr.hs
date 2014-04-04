@@ -29,8 +29,6 @@ import Web.Tumblr.Helpers
 import qualified Data.HashMap.Strict as HM
 
 newtype AvatarSize = AvatarSize {getAvatarSize :: Int}
-
-data PostType = Text | Quote | Link | Answer | Video | Audio | Photo | Chat deriving (Eq, Show)
   
 data PostFilter = PlainText | Raw deriving (Eq, Show)
 

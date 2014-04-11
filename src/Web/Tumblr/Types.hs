@@ -32,7 +32,7 @@ instance FromJSON BlogInfo where
                          v .: "description" <*>
                          v .: "ask" <*>
                          v .: "ask_anon" <*>
-                         v .: "likes"
+                         v .:? "likes" .!= 0
   parseJSON _ = empty
   
   

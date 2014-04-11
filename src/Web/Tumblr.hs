@@ -1,6 +1,19 @@
 {-# LANGUAGE FlexibleContexts, DoAndIfThenElse #-}
 
-module Web.Tumblr where
+module Web.Tumblr
+       ( module Web.Tumblr
+       , BaseHostname
+       , tumblrOAuth
+       , tumblrInfo
+       , tumblrAvatar
+       , tumblrLikes
+       , tumblrPosts
+       , tumblrAuthorize
+       , tumblrFollowers
+       , tumblrQueuedPosts
+       , tumblrDraftPosts
+       , tumblrSubmissionPosts
+       ) where
 
 import Control.Applicative
 import Control.Arrow
@@ -24,7 +37,7 @@ import Network.HTTP.Types
 import Web.Authenticate.OAuth(Credential)
 import Web.Authenticate.OAuth
 
-import Web.Tumblr.Types
+import Web.Tumblr.Types as Web.Tumblr
 import Web.Tumblr.Helpers
 import qualified Data.HashMap.Strict as HM
 
@@ -100,8 +113,9 @@ jsonValue = json >>= \v -> case fromJSON v of
       Success x -> return x
 
 -- | This method returns general information about the blog, such as the title, number of posts, and other high-level data.
-tumblrInfo :: (HasAPIKey k, MonadBaseControl IO m, MonadResource m, MonadReader k m) => 
-             BaseHostname -> Manager -> m BlogInfo
+tumblrInfo :: (HasAPIKey k, MonadBaseControl IO m, MonadResource m, MonadReader k m) 
+             => BaseHostname -- ^ the host name of the Tumblr. Usually "username.tumblr.com".
+             -> Manager -> m BlogInfo
 tumblrInfo baseHostname manager = do
   apiKey <- getAPIKey <$> ask
   let myRequest = tumblrBaseRequest {path = B.pack "/v2/blog/" <> baseHostname <> B.pack "/info?api_key=" <> apiKey}
